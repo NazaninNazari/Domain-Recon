@@ -5,7 +5,7 @@
 A powerful WHOIS and DNS reconnaissance tool for domain analysis, subdomain enumeration, and network intelligence.  
 
 ```bash
-git clone https://github.com/yourusername/N0aziXss-Domain-Recon.git  
+git clone https://github.com/NazaninNazari/Domain-Recon.git  
 cd N0aziXss-Domain Recon  
 pip install -r requirements.txt
 
