@@ -6,7 +6,7 @@ A powerful WHOIS and DNS reconnaissance tool for domain analysis, subdomain enum
 
 ```bash
 git clone https://github.com/NazaninNazari/Domain-Recon.git  
-cd N0aziXss-Domain Recon  
+cd domain_recon  
 pip install -r requirements.txt
 
 # install dependencies
