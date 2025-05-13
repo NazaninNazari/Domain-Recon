@@ -16,7 +16,7 @@ init(autoreset=True)
 console = Console()
 
 # Banner
-BANNER = Figlet(font='slant').renderText('N0aziXss DomainRecon')
+BANNER = Figlet(font='slant').renderText('Domain Recon')
 console.print(Fore.CYAN + BANNER)
 print(Fore.CYAN + "♦*"*27)
 print(Fore.GREEN + "🍓Professional Domain Recon Tool - Secure & Ethical🍓")
