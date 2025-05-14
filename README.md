@@ -1,7 +1,6 @@
 # N0aziXss Domain Recon 🍓
 
-# N0aziXss Domain Recon Tool 🔍  
-![License](https://img.shields.io/badge/License-MIT-green) ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)  
+# N0aziXss Domain Recon Tool 🔍    
 A powerful WHOIS and DNS reconnaissance tool for domain analysis, subdomain enumeration, and network intelligence.  
 
 ```bash
@@ -28,7 +27,6 @@ python domain_recon.py -d example.com -o results.json
 ```bash
 python domain_recon.py -d example.com --raw  
 
-# Sample Output
 # Sample Output
 1. Badges: Shows license and Python version at a glance.  
 2. Structured Commands: Clear code blocks and tables.  
