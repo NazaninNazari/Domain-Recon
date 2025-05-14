@@ -1,7 +1,8 @@
 # N0aziXss Domain Recon 🍓
+# N0aziXss Domain Recon Tool 🔍 
 
-# N0aziXss Domain Recon Tool 🔍    
-A powerful WHOIS and DNS reconnaissance tool for domain analysis, subdomain enumeration, and network intelligence.  
+## 🌟 Introduction
+**N0aziXss Domain Recon** A powerful WHOIS and DNS reconnaissance tool for domain analysis, subdomain enumeration, and network intelligence.  
 
 ```bash
 git clone https://github.com/NazaninNazari/Domain-Recon.git  
