@@ -10,21 +10,27 @@ from pyfiglet import Figlet
 from ratelimit import limits, sleep_and_retry
 from rich.console import Console
 from rich.table import Table
+from datetime import datetime
+import warnings
+import urllib3
 
 # Initialize
 init(autoreset=True)
 console = Console()
+warnings.filterwarnings("ignore")
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Banner
 BANNER = Figlet(font='slant').renderText('Domain Recon')
 console.print(Fore.CYAN + BANNER)
-print(Fore.CYAN + "♦*"*27)
-print(Fore.GREEN + "🍓Professional Domain Recon Tool - Secure & Ethical🍓")
-print(Fore.CYAN + "♦*"*27 + "\n")
+print(Fore.CYAN + "♦*" * 27)
+print(Fore.GREEN + "🍓 Professional Domain Recon Tool - Secure & Ethical 🍓")
+print(Fore.CYAN + "♦*" * 27 + "\n")
 
 class WhoisClient:
-    def __init__(self, timeout=5):
+    def __init__(self, timeout=5, proxies=None):
         self.timeout = timeout
+        self.proxies = proxies
         self.WhoisServers = {
             'com': 'whois.verisign-grs.com',
             'net': 'whois.verisign-grs.com',
@@ -34,6 +40,12 @@ class WhoisClient:
         self.resolver = dns.resolver.Resolver()
         self.resolver.timeout = 3
         self.resolver.lifetime = 3
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0'
+        })
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def GetWhoisServer(self, TLD):
         return self.WhoisServers.get(TLD, 'whois.iana.org')
@@ -57,67 +69,94 @@ class WhoisClient:
                         break
                     response += data
                 parsed_data = self.ParseWhoisResponse(response.decode())
-                # Adding subdomains and IPs with advanced methods
                 parsed_data.update({
                     "Subdomains": self.FindSubdomains(domain),
-                    "IP Addresses": self.GetIPs(domain)
+                    "IP Addresses": self.GetIPs(domain),
+                    "TXT Records": self.GetTXTRecords(domain),
                 })
+                self.CheckExpiryWarning(parsed_data)
                 return parsed_data
         except Exception as e:
             raise ValueError(f"{Fore.RED}WHOIS query failed: {str(e)}")
 
     def FindSubdomains(self, domain):
-        # Discovering subdomains by combining different methods
         subdomains = set()
         
-        # Method 1: Search Certificate Transparency Logs
+        # Method 1: Certificate Transparency Logs (with improved error handling)
         try:
-            ct_logs = requests.get(f"https://crt.sh/?q=%25.{domain}&output=json")
-            if ct_logs.status_code == 200:
-                for entry in ct_logs.json():
+            response = self.session.get(
+                f"https://crt.sh/?q=%25.{domain}&output=json",
+                timeout=15,
+                verify=False
+            )
+            if response.status_code == 200:
+                for entry in response.json():
                     name = entry['name_value']
                     if name.startswith('*.'):
-                        subdomains.add(name.replace('*.', ''))
+                        subdomains.add(name[2:])
                     else:
                         subdomains.add(name)
-        except:
-            pass
-        
-        # Method 2: DNS Brute-force with Dynamic Pattern
-        try:
-            answers = self.resolver.resolve(domain, 'NS')
-            for ns in answers:
+        except requests.exceptions.RequestException as e:
+            if "SOCKSHTTPSConnectionPool" in str(e):
+                # Retry without proxy if SOCKS fails
                 try:
-                    Xfr = dns.Query.xfr(str(ns), domain, timeout=5)
-                    for record in Xfr:
-                        if record.DataType == dns.RDataType.NS:
-                            subdomains.add(str(record.name))
+                    response = requests.get(
+                        f"https://crt.sh/?q=%25.{domain}&output=json",
+                        headers={'User-Agent': 'Mozilla/5.0'},
+                        timeout=15,
+                        verify=False
+                    )
+                    if response.status_code == 200:
+                        for entry in response.json():
+                            name = entry['name_value']
+                            subdomains.add(name.replace('*.', ''))
                 except:
-                    continue
-        except:
-            pass
+                    pass
+            else:
+                pass
         
-        return list(subdomains)
+        # Method 2: Common Subdomain Brute-forcing
+        common_subs = ['www', 'mail', 'ftp', 'admin', 'webmail', 'ns1', 'ns2']
+        for sub in common_subs:
+            try:
+                self.resolver.resolve(f"{sub}.{domain}", 'A')
+                subdomains.add(f"{sub}.{domain}")
+            except:
+                continue
+        
+        return sorted(subdomains) if subdomains else ["No subdomains found"]
 
     def GetIPs(self, domain):
-        # Get all relevant DNS records
         ips = set()
         record_types = ['A', 'AAAA', 'CNAME', 'MX']
         
         for rt in record_types:
             try:
                 answers = self.resolver.resolve(domain, rt)
-                for RData in answers:
-                    if rt == 'A':
-                        ips.add(RData.address)
-                    elif rt == 'AAAA':
-                        ips.add(RData.address)
-                    elif rt in ['CNAME', 'MX']:
-                        ips.add(str(RData.target))
-            except:
+                for rdata in answers:
+                    if rt in ['A', 'AAAA']:
+                        ips.add(rdata.address)
+                    elif rt == 'CNAME':
+                        ips.add(str(rdata.target))
+                    elif rt == 'MX':
+                        ips.add(str(rdata.exchange))
+            except dns.resolver.NoAnswer:
+                continue
+            except dns.resolver.NXDOMAIN:
+                continue
+            except Exception:
                 continue
         
-        return list(ips)
+        return sorted(ips) if ips else ["No IP records found"]
+
+    def GetTXTRecords(self, domain):
+        try:
+            answers = self.resolver.resolve(domain, 'TXT')
+            return [str(rdata).strip('"') for rdata in answers]
+        except dns.resolver.NoAnswer:
+            return ["No TXT records found"]
+        except Exception:
+            return ["TXT records unavailable"]
 
     def ValidateDomain(self, domain):
         pattern = r'^([a-z0-9-]+\.)+[a-z]{2,}$'
@@ -149,21 +188,37 @@ class WhoisClient:
                         parsed[clean_key] = value.strip()
         return parsed
 
+    def CheckExpiryWarning(self, data):
+        if 'Expiry Date' in data:
+            expiry_date = data['Expiry Date']
+            try:
+                expiry = datetime.strptime(expiry_date, '%Y-%m-%d')
+                if (expiry - datetime.now()).days < 30:
+                    data['Expiry Warning'] = "⚠️ Domain expires soon!"
+            except ValueError:
+                pass
+
 def PrintResults(data):
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Field", style="cyan", width=20)
     table.add_column("Value", style="white")
 
-    # Show main fields
-    main_fields = ['Domain Name', 'Registrar', 'Creation Date', 
-                  'Expiry Date', 'Name Servers', 'Status']
+    main_fields = [
+        'Domain Name', 'Registrar', 'Creation Date',
+        'Expiry Date', 'Name Servers', 'Status', 'Expiry Warning'
+    ]
     for field in main_fields:
         if field in data:
             value = data[field]
-            table.add_row(field, "\n".join(value) if isinstance(value, list) else value)
+            table.add_row(
+                field,
+                "\n".join(value) if isinstance(value, list) else str(value),
+                style="bold red" if field == 'Expiry Warning' else None
+            )
 
-    table.add_row("Subdomains", "\n".join(data.get('Subdomains', ['None found'])))
-    table.add_row("IP/DNS Records", "\n".join(data.get('IP Addresses', ['None found'])))
+    table.add_row("Subdomains", "\n".join(data.get('Subdomains', ['Not found'])))
+    table.add_row("IP/DNS Records", "\n".join(data.get('IP Addresses', ['Not found'])))
+    table.add_row("TXT Records", "\n".join(data.get('TXT Records', ['Not found'])))
 
     console.print(table)
 
@@ -171,10 +226,14 @@ def Main():
     parser = argparse.ArgumentParser(description='N0aziXss WHOIS Tool')
     parser.add_argument('-d', '--domain', required=True, help='Target domain')
     parser.add_argument('-o', '--output', help='Save result to JSON file')
+    parser.add_argument('--csv', help='Export results to CSV')
     parser.add_argument('--raw', action='store_true', help='Show raw response')
+    parser.add_argument('--proxies', help='Proxy settings (e.g., http://proxy:port)')
     args = parser.parse_args()
 
-    client = WhoisClient()
+    proxies = {'http': args.proxies, 'https': args.proxies} if args.proxies else None
+    client = WhoisClient(proxies=proxies)
+
     try:
         result = client.Query(args.domain)
         if args.raw:
@@ -186,9 +245,15 @@ def Main():
             with open(args.output, 'w') as f:
                 json.dump(result, f, indent=2)
             console.print(f"\n[+] Results saved to {args.output}", style="green")
+        
+        if args.csv:
+            import pandas as pd
+            pd.DataFrame([result]).to_csv(args.csv, index=False)
+            console.print(f"\n[+] CSV exported to {args.csv}", style="green")
             
     except Exception as e:
-        console.print(f"Error: {str(e)}", style="bold red")
+        console.print(f"[bold red]Error: {str(e)}[/bold red]")
+        exit(1)
 
 if __name__ == "__main__":
     Main()

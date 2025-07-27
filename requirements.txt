@@ -1,7 +1,14 @@
+# Core Packages
 colorama==0.4.4
 pyfiglet==0.8.post1
 requests==2.26.0
 dnspython==2.2.1
 tldextract==3.3.1
+
+# Additional Functionality
 ratelimit==2.2.1
 rich==12.5.1
+pandas==1.3.3
+
+# Security
+urllib3==1.26.12
