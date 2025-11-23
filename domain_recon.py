@@ -20,12 +20,39 @@ console = Console()
 warnings.filterwarnings("ignore")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Banner
-BANNER = Figlet(font='slant').renderText('Domain Recon')
-console.print(Fore.CYAN + BANNER)
-print(Fore.CYAN + "♦*" * 27)
-print(Fore.GREEN + "🍓 Professional Domain Recon Tool - Secure & Ethical 🍓")
-print(Fore.CYAN + "♦*" * 27 + "\n")
+# Banner_One
+PURPLE = '\033[0;35m' 
+END = "\033[0m"
+
+banner = f"""
+  {END}
+    ███╗   ██╗ █████╗ ███████╗██╗██╗  ██╗███████╗███████╗
+    ████╗  ██║██╔══██╗╚══███╔╝██║╚██╗██╔╝██╔════╝██╔════╝
+    ██╔██╗ ██║███████║  ███╔╝ ██║ ╚███╔╝ ███████╗███████╗
+    ██║╚██╗██║██╔══██║ ███╔╝  ██║ ██╔██╗ ╚════██║╚════██║
+    ██║ ╚████║██║  ██║███████╗██║██╔╝ ██╗███████║███████║
+    ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚══════╝╚══════╝
+                                                         
+    ██████╗  ██████╗ ███╗   ███╗ █████╗ ██╗███╗   ██╗    
+    ██╔══██╗██╔═══██╗████╗ ████║██╔══██╗██║████╗  ██║    
+    ██║  ██║██║   ██║██╔████╔██║███████║██║██╔██╗ ██║    
+    ██║  ██║██║   ██║██║╚██╔╝██║██╔══██║██║██║╚██╗██║    
+    ██████╔╝╚██████╔╝██║ ╚═╝ ██║██║  ██║██║██║ ╚████║    
+    ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝    
+                                                         
+    ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗          
+    ██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║          
+    ██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║          
+    ██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║          
+    ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║          
+    ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝ """
+
+print(banner)
+
+# Banner_Two
+print(Fore.CYAN + "♦*"*28)
+print(Fore.YELLOW + "🍓 Professional Domain Recon Tool - Secure & Ethical 🍓")
+print(Fore.CYAN + "♦*"*28 + "\n")
 
 class WhoisClient:
     def __init__(self, timeout=5, proxies=None):
