@@ -45,14 +45,14 @@ banner = f"""
     ██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║          
     ██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║          
     ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║          
-    ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝ """
+    ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
+{Fore.YELLOW}
+╔══════════════════════════════════════════════════════╗
+║   Professional Domain Recon Tool - Secure & Ethical  ║
+╚══════════════════════════════════════════════════════╝
+{Fore.RESET}"""
 
 print(banner)
-
-# Banner_Two
-print(Fore.CYAN + "♦*"*28)
-print(Fore.YELLOW + "🍓 Professional Domain Recon Tool - Secure & Ethical 🍓")
-print(Fore.CYAN + "♦*"*28 + "\n")
 
 class WhoisClient:
     def __init__(self, timeout=5, proxies=None):
